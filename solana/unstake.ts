@@ -11,7 +11,8 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { Wallet } from "@solana/wallet-adapter-react";
-import { handleConfig } from "./config";
+import { contractAddr, program } from "./config";
+import { initConfig } from "./initConfig";
 
 export async function unstake(
   sSolAmount: string,
@@ -31,11 +32,6 @@ export async function unstake(
       throw new Error("No wallet is connected. Please connect your wallet.");
     }
 
-    const data = await handleConfig();
-    const connection = data.connection;
-    const program = data.program;
-    const contractAddr = data.contractAddr;
-
     const response = await fetch("/api/state-acc-publickey", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -52,6 +48,11 @@ export async function unstake(
     // console.log("State account data:", stateAccountData);
 
     const msolMint = stateAccountData.msolMint;
+
+    const { contractAddr, program } = await initConfig(
+      result?.PAYER_KEY,
+      result?.RPC
+    );
 
     // Generate PDAs for the liquidity pool and authority
     const [solLegPda] = PublicKey.findProgramAddressSync(

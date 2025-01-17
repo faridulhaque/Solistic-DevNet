@@ -16,7 +16,8 @@ import {
 } from "@solana/spl-token";
 import { Wallet } from "@solana/wallet-adapter-react";
 import { Connection } from "@solana/web3.js";
-import { handleConfig } from "./config";
+import { payer, program } from "./config";
+import { initConfig } from "./initConfig";
 
 export async function delayedUnstake(
   amount: string,
@@ -36,11 +37,6 @@ export async function delayedUnstake(
       throw new Error("No wallet is connected. Please connect your wallet.");
     }
 
-    const data = await handleConfig();
-    const connection = data.connection;
-    const program = data.program;
-    const payer = data.payer;
-
     const response = await fetch("/api/state-acc-publickey", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,6 +50,11 @@ export async function delayedUnstake(
     const stateAccountData = await getStateAccountData(stateAccountAddr);
 
     const msolMint = stateAccountData.msolMint;
+
+    const { program } = await initConfig(
+      result?.PAYER_KEY,
+      result?.RPC
+    );
 
     // Generate new ticket account
     const newTicketAccount = Keypair.generate();

@@ -1,6 +1,11 @@
 import { BN } from "bn.js";
 import { getStateAccountData } from "./getStateAccountData";
-import { PublicKey, Transaction, ComputeBudgetProgram } from "@solana/web3.js";
+import {
+  PublicKey,
+  Transaction,
+  ComputeBudgetProgram,
+  Keypair,
+} from "@solana/web3.js";
 import { createAtaTx } from "./createAtaTx";
 import {
   createAssociatedTokenAccountInstruction,
@@ -10,7 +15,15 @@ import {
 } from "@solana/spl-token";
 import { Wallet, useWallet } from "@solana/wallet-adapter-react";
 import { Connection } from "@solana/web3.js";
-import { handleConfig } from "./config";
+// import { contractAddr, program } from "./config";
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import idl from "../targets/idl/marinade_forking_smart_contract.json";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import {
+  IDL,
+  MarinadeForkingSmartContract,
+} from "../targets/types/marinade_forking_smart_contract";
+import { initConfig } from "./initConfig";
 
 export async function deposit(
   amount: string,
@@ -27,19 +40,10 @@ export async function deposit(
       throw new Error("No wallet is connected. Please connect your wallet.");
     }
 
-    const data = await handleConfig();
-    const connection = data.connection;
-    const contractAddr = data.contractAddr;
-    const program = data.program;
-
     const response = await fetch("/api/state-acc-publickey", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount,
-        userPublicKey,
-        priorityFee,
-      }),
+      body: JSON.stringify({}),
     });
 
     const result = await response.json();
@@ -49,6 +53,11 @@ export async function deposit(
     const depositAmount = new BN(amount);
 
     const msolMint = stateAccountData.msolMint;
+
+    const { contractAddr, program } = await initConfig(
+      result?.PAYER_KEY,
+      result?.RPC
+    );
     // Generate PDAs for the liquidity pool and authority
     const [solLegPda] = PublicKey.findProgramAddressSync(
       [stateAccountPubKey.toBuffer(), Buffer.from("liq_sol")],
@@ -146,3 +155,5 @@ export async function deposit(
     throw error;
   }
 }
+
+
