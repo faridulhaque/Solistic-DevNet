@@ -1,5 +1,4 @@
 import { BN } from "bn.js";
-import { connection, contractAddr, payer, program } from "./config";
 import { getStateAccountData } from "./getStateAccountData";
 import {
   Keypair,
@@ -17,6 +16,7 @@ import {
 } from "@solana/spl-token";
 import { Wallet } from "@solana/wallet-adapter-react";
 import { Connection } from "@solana/web3.js";
+import { handleConfig } from "./config";
 
 export async function delayedUnstake(
   amount: string,
@@ -30,23 +30,28 @@ export async function delayedUnstake(
   console.log("Delayed unstake amount:", amount);
   console.log("pf", priorityFee);
 
-
   try {
     // Ensure a wallet is connected
     if (!connected || !wallet || !wallet.adapter) {
       throw new Error("No wallet is connected. Please connect your wallet.");
     }
 
-    const stateAccountAddr = process.env.NEXT_PUBLIC_STATE_ACCOUNT || "";
-    if (!stateAccountAddr) {
-      throw new Error("State account missing in environment variables");
-    }
+    const data = await handleConfig();
+    const connection = data.connection;
+    const program = data.program;
+    const payer = data.payer;
+
+    const response = await fetch("/api/state-acc-publickey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    const result = await response.json();
+    const stateAccountAddr = result.stateAccountAddr;
 
     const unstakeAmount = new BN(amount);
-    const stateAccountPubKey = new PublicKey(stateAccountAddr);
-    const stateAccountData = await getStateAccountData();
-
-    console.log("State account data:", stateAccountData);
+    const stateAccountData = await getStateAccountData(stateAccountAddr);
 
     const msolMint = stateAccountData.msolMint;
 
