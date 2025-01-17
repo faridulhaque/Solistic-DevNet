@@ -21,129 +21,131 @@ export async function deposit(
   connected: boolean,
   priorityFee: boolean
 ) {
-  console.log("Deposit amount:", amount);
-  console.log("pf", priorityFee);
-
-
   try {
     // Ensure a wallet is connected
     if (!connected || !wallet || !wallet.adapter) {
       throw new Error("No wallet is connected. Please connect your wallet.");
     }
 
-    const stateAccountAddr = process.env.NEXT_PUBLIC_STATE_ACCOUNT || "";
-    if (!stateAccountAddr) {
-      throw new Error("State account missing in environment variables");
-    }
+    const response = await fetch("/api/state-acc-publickey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        userPublicKey,
+        priorityFee,
+      }),
+    });
 
+    const result = await response.json();
+    const stateAccountPubKey = result.stateAccountPubKey;
     const depositAmount = new BN(amount);
-    const stateAccountPubKey = new PublicKey(stateAccountAddr);
-    const stateAccountData = await getStateAccountData();
-
-    console.log("State account data:", stateAccountData);
+    const stateAccountData = await getStateAccountData(stateAccountPubKey);
 
     const msolMint = stateAccountData.msolMint;
+    console.log(msolMint)
 
-    // Generate PDAs for the liquidity pool and authority
-    const [solLegPda] = PublicKey.findProgramAddressSync(
-      [stateAccountPubKey.toBuffer(), Buffer.from("liq_sol")],
-      contractAddr
-    );
-    const [authorityMsolAcc] = PublicKey.findProgramAddressSync(
-      [stateAccountPubKey.toBuffer(), Buffer.from("st_mint")],
-      contractAddr
-    );
-    const [authorityMSolLegAcc] = PublicKey.findProgramAddressSync(
-      [stateAccountPubKey.toBuffer(), Buffer.from("liq_st_sol_authority")],
-      contractAddr
-    );
-    const [reservePda] = PublicKey.findProgramAddressSync(
-      [stateAccountPubKey.toBuffer(), Buffer.from("reserve")],
-      contractAddr
-    );
+    // // Generate PDAs for the liquidity pool and authority
+    // const [solLegPda] = PublicKey.findProgramAddressSync(
+    //   [stateAccountPubKey.toBuffer(), Buffer.from("liq_sol")],
+    //   contractAddr
+    // );
+    // const [authorityMsolAcc] = PublicKey.findProgramAddressSync(
+    //   [stateAccountPubKey.toBuffer(), Buffer.from("st_mint")],
+    //   contractAddr
+    // );
+    // const [authorityMSolLegAcc] = PublicKey.findProgramAddressSync(
+    //   [stateAccountPubKey.toBuffer(), Buffer.from("liq_st_sol_authority")],
+    //   contractAddr
+    // );
+    // const [reservePda] = PublicKey.findProgramAddressSync(
+    //   [stateAccountPubKey.toBuffer(), Buffer.from("reserve")],
+    //   contractAddr
+    // );
 
-    console.log(
-      "Liquidity pool mSOL leg authority:",
-      authorityMSolLegAcc.toString()
-    );
+    // console.log(
+    //   "Liquidity pool mSOL leg authority:",
+    //   authorityMSolLegAcc.toString()
+    // );
 
-    // Get the associated token account (ATA) for the user and the mint
-    const mintTo = getAssociatedTokenAddressSync(msolMint, userPublicKey);
-    const mSolLeg = getAssociatedTokenAddressSync(
-      msolMint,
-      authorityMSolLegAcc,
-      true
-    );
+    // // Get the associated token account (ATA) for the user and the mint
+    // const mintTo = getAssociatedTokenAddressSync(msolMint, userPublicKey);
+    // const mSolLeg = getAssociatedTokenAddressSync(
+    //   msolMint,
+    //   authorityMSolLegAcc,
+    //   true
+    // );
 
-    // Check if the user's ATA exists
-    const accountExists = await connection.getAccountInfo(mintTo);
-    const transaction = new Transaction();
+    // // Check if the user's ATA exists
+    // const accountExists = await connection.getAccountInfo(mintTo);
+    // const transaction = new Transaction();
 
-    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: priorityFee ? 800_000 : 400_000,
-      
-    });
-    const setComputeUnitPriceIx = ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: priorityFee ? 20 : 2, // example priority fee: 2 micro-lamports per CU
-    });
+    // const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+    //   units: priorityFee ? 800_000 : 400_000,
 
-    transaction.add(setComputeUnitLimitIx, setComputeUnitPriceIx);
+    // });
+    // const setComputeUnitPriceIx = ComputeBudgetProgram.setComputeUnitPrice({
+    //   microLamports: priorityFee ? 20 : 2, // example priority fee: 2 micro-lamports per CU
+    // });
 
-    if (!accountExists) {
-      console.log("Creating associated token account...");
-      transaction.add(
-        createAssociatedTokenAccountInstruction(
-          userPublicKey,
-          mintTo,
-          userPublicKey,
-          msolMint,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        )
-      );
-      // transaction.feePayer = userPublicKey;
-      // transaction.recentBlockhash = (
-      //   await connection.getLatestBlockhash()
-      // ).blockhash;
+    // transaction.add(setComputeUnitLimitIx, setComputeUnitPriceIx);
 
-      // console.log("Requesting wallet to sign ATA creation...");
-      // const ataSig = await sendTransaction(transaction, connection);
-      // console.log("ATA Transaction Signature:", ataSig);
-    } else {
-      console.log(
-        "Associated token account already exists:",
-        mintTo.toBase58()
-      );
-    }
+    // if (!accountExists) {
+    //   console.log("Creating associated token account...");
+    //   transaction.add(
+    //     createAssociatedTokenAccountInstruction(
+    //       userPublicKey,
+    //       mintTo,
+    //       userPublicKey,
+    //       msolMint,
+    //       TOKEN_PROGRAM_ID,
+    //       ASSOCIATED_TOKEN_PROGRAM_ID
+    //     )
+    //   );
+    //   // transaction.feePayer = userPublicKey;
+    //   // transaction.recentBlockhash = (
+    //   //   await connection.getLatestBlockhash()
+    //   // ).blockhash;
 
-    // Create the deposit transaction
-    console.log("Creating deposit transaction...");
-    const staketx = await program.methods
-      .deposit(depositAmount)
-      .accounts({
-        state: stateAccountAddr,
-        msolMint: msolMint,
-        liqPoolSolLegPda: solLegPda,
-        liqPoolMsolLeg: mSolLeg,
-        liqPoolMsolLegAuthority: authorityMSolLegAcc,
-        reservePda: reservePda,
-        transferFrom: userPublicKey,
-        mintTo: mintTo,
-        msolMintAuthority: authorityMsolAcc,
-      })
-      .transaction();
-    transaction.add(staketx);
-    transaction.feePayer = userPublicKey;
+    //   // console.log("Requesting wallet to sign ATA creation...");
+    //   // const ataSig = await sendTransaction(transaction, connection);
+    //   // console.log("ATA Transaction Signature:", ataSig);
+    // } else {
+    //   console.log(
+    //     "Associated token account already exists:",
+    //     mintTo.toBase58()
+    //   );
+    // }
 
-    transaction.recentBlockhash = (
-      await connection.getLatestBlockhash()
-    ).blockhash;
+    // // Create the deposit transaction
+    // console.log("Creating deposit transaction...");
+    // const staketx = await program.methods
+    //   .deposit(depositAmount)
+    //   .accounts({
+    //     state: stateAccountAddr,
+    //     msolMint: msolMint,
+    //     liqPoolSolLegPda: solLegPda,
+    //     liqPoolMsolLeg: mSolLeg,
+    //     liqPoolMsolLegAuthority: authorityMSolLegAcc,
+    //     reservePda: reservePda,
+    //     transferFrom: userPublicKey,
+    //     mintTo: mintTo,
+    //     msolMintAuthority: authorityMsolAcc,
+    //   })
+    //   .transaction();
+    // transaction.add(staketx);
+    // transaction.feePayer = userPublicKey;
 
-    console.log("Requesting wallet to sign deposit transaction...");
-    const sig = await sendTransaction(transaction, connection);
-    console.log("Deposit transaction signature:", sig);
+    // transaction.recentBlockhash = (
+    //   await connection.getLatestBlockhash()
+    // ).blockhash;
 
-    return sig;
+    // console.log("Requesting wallet to sign deposit transaction...");
+    // const sig = await sendTransaction(transaction, connection);
+    // console.log("Deposit transaction signature:", sig);
+
+    // return sig;
+    return "";
   } catch (error) {
     console.error("Error during deposit:", error.message);
     console.error("Error stack:", error.stack);

@@ -3,12 +3,9 @@ import { program } from "./config";
 import { PublicKey } from "@solana/web3.js";
 config();
 
-async function getStateAccountData() {
+async function getStateAccountData(stateAccountPubKey: string) {
   try {
-    const stateAccountAddr = new PublicKey(
-      process.env.NEXT_PUBLIC_STATE_ACCOUNT || ""
-    );
-    const state = await program.account.state.fetch(stateAccountAddr);
+    const state = await program.account.state.fetch(stateAccountPubKey);
 
     return state;
   } catch (error) {
