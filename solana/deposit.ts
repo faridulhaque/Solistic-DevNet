@@ -38,14 +38,15 @@ export async function deposit(
     });
 
     const result = await response.json();
-    const stateAccountPubKey = result.stateAccountPubKey;
+    const stateAccountAddr = result.stateAccountAddr;
+    const stateAccountData = await getStateAccountData(stateAccountAddr);
+    const stateAccountPubKey = new PublicKey(stateAccountAddr);
     const depositAmount = new BN(amount);
-    const stateAccountData = await getStateAccountData(stateAccountPubKey);
+
 
     const msolMint = stateAccountData.msolMint;
-    console.log(msolMint)
+    console.log(msolMint);
 
-   
     return "";
   } catch (error) {
     console.error("Error during deposit:", error.message);

@@ -9,9 +9,8 @@ export async function POST(req) {
       throw new Error("State account missing in environment variables");
     }
 
-    const stateAccountPubKey = new PublicKey(stateAccountAddr);
 
-    return NextResponse.json({ stateAccountPubKey });
+    return NextResponse.json({ stateAccountAddr });
   } catch (error) {
     console.error("Error in deposit API:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
