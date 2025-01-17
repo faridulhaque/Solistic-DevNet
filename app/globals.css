@@ -1,0 +1,81 @@
+/* styles/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&family=Zilla+Slab:wght@600&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background-color: #ede9f7;
+  --text-color: #333333;
+  --card-background: #f9f9f9;
+  --primary-color: #6b46c1;
+  --diamond-bg-color: #FFF6E3; /* Light yellow */
+  --diamond-border-color: #FFA500; /* Orange */
+  --diamond-text-color: #FFA500; /* Orange */
+}
+
+.dark {
+  --background-color: black;
+  --text-color: #eaeaea;
+  --card-background: #2e2e2e;
+  --primary-color: #9f7aea;
+  --diamond-bg-color: #6F5DA8; /* Dark theme background */
+  --diamond-border-color: #CCBDFC; /* Dark theme border */
+  --diamond-text-color: #CCBDFC; /* Dark theme text */
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  @apply font-zilla-slab;
+}
+
+.diamond-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background-color: var(--diamond-bg-color); /* Use variable for background */
+  border: 2px solid var(--diamond-border-color); /* Use variable for border */
+  color: var(--diamond-text-color); /* Use variable for text */
+  font-weight: bold;
+  transform: rotate(45deg); /* Rotate to make it diamond-shaped */
+  font-size: 18px;
+  margin: 10px; /* Optional for spacing */
+}
+
+.diamond-number span {
+  transform: rotate(-45deg); /* Rotate text back to normal */
+}
+
+/* Custom styles for WalletMultiButton */
+/* .wallet-adapter-button-trigger {
+  background-color: #6a4ec6 !important; 
+  color: #f4e7d3 !important;
+  font-family: "Arial", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 10px 20px !important;
+  border-radius: 9999px !important;
+  cursor: pointer;
+  transition: background-color 0.3s ease !important;
+} */
+
+/* .wallet-adapter-button-trigger:hover {
+  background-color: #5a3eb6 !important; 
+} */
+
+/* Custom styles for WalletDisconnectButton */
+/* .wallet-adapter-button-trigger.wallet-adapter-button-disconnect {
+  background-color: #e74c3c !important; 
+  color: #ffffff !important; 
+} */
+
+/* .wallet-adapter-button-trigger.wallet-adapter-button-disconnect:hover {
+  background-color: #c0392b !important;
+} */
+
